@@ -8,4 +8,4 @@ This is a collection of [Meep](http://ab-initio.mit.edu/wiki/index.php/Main_Page
 
 References
 ----------
-I used these scripts for the 2015 publication [*ODTbrain: a Python library for full-view, dense diffraction tomography* (Müller et al. **BMC Bioinformatics**](http://dx.doi.org/10.1186/s12859-015-0764-0). Please cite this publication if you are using them in a scientific publication.
+I used these scripts for the 2015 publication [*ODTbrain: a Python library for full-view, dense diffraction tomography* (Müller et al.) **BMC Bioinformatics**](http://dx.doi.org/10.1186/s12859-015-0764-0). Please cite this paper if you are using them in a scientific publication.
