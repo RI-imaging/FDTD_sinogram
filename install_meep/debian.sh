@@ -1,4 +1,7 @@
 #!/bin/bash
+## Stop if errors occur
+set -e
+
 ## --- Settings ---------------------------------------------------------------
 
 ## (Optional) Install utilities
