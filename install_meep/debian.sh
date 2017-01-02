@@ -25,7 +25,9 @@ cd ..
 ## Skip this line if no multiprocessing used:
 meep_opt="--with-mpi"; sudo apt-get -y install openmpi-bin libopenmpi-dev
 ## Install really everything that has to do with hdf5
-sudo apt-get -y install libhdf5-openmpi-10 libhdf5-openmpi-dev libhdf5-serial-dev libhdf5-10  hdf5-tools hdf5-helpers h5utils
+sudo apt-get -y install libhdf5-openmpi-dev libhdf5-serial-dev hdf5-tools h5utils
+# You might also want to try these:
+# sudo apt-get -y install libhdf5-openmpi-10 libhdf5-10 hdf5-helpers
 
 export CFLAGS=" -fPIC"; export CXXFLAGS=" -fPIC"; export FFLAGS="-fPIC" 
 export CPPFLAGS="-I/usr/local/include -I/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -I/usr/lib/x86_64-linux-gnu/hdf5/serial/ -I/usr/include/ -I/usr/include/hdf5/openmpi/ -I/usr/include/hdf5/serial/"
