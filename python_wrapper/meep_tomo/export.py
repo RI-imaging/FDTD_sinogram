@@ -3,6 +3,7 @@
     I use this file to compress ~600MB of data by a factor of 1000 using
     lzma compression. The data is downsampled with the parameter `skip`
 """
+from __future__ import division, print_function, unicode_literals
 
 import os
 from os.path import join

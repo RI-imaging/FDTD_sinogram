@@ -7,9 +7,9 @@ matplotlib.use('Agg')
 matplotlib.rcParams['text.usetex']=True
 matplotlib.rcParams['text.latex.unicode']=True
 matplotlib.rcParams['font.family']='serif'
-matplotlib.rcParams['text.latex.preamble']=[r"""\usepackage{amsmath}
-                                            \usepackage[utf8x]{inputenc}
-                                            \usepackage{amssymb}"""] 
+#matplotlib.rcParams['text.latex.preamble']=[r"""\usepackage{amsmath}
+#                                            \usepackage[utf8x]{inputenc}
+#                                            \usepackage{amssymb}"""] 
 from matplotlib import pylab as plt
 import numpy as np
 import os

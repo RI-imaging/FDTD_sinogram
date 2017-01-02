@@ -6,6 +6,7 @@ import numpy as np
 
 from . import meta, plot
 
+
 def SetEllipseInArray(array, val, x, y, a, b, phi, sampling, phi_tot):
     """
         Using an input array, set everything inside an elliptical
