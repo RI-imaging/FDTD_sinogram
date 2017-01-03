@@ -28,9 +28,9 @@ echo "...Installing meep dependencies 1"
 meep_opt="--with-mpi"; sudo apt-get -y install openmpi-bin libopenmpi-dev
 ## Install really everything that has to do with hdf5
 echo "...Installing meep dependencies 2"
-sudo apt-get -y -f -m install hdf5-tools h5utils
+sudo aptitude -y install hdf5-tools h5utils libhdf5-openmpi-dev libhdf5-serial-dev
 # You might also want to try these:
-# sudo apt-get -y install libhdf5-openmpi-10 libhdf5-10 hdf5-helpers libhdf5-openmpi-dev libhdf5-serial-dev
+# sudo apt-get -y install libhdf5-openmpi-10 libhdf5-10 hdf5-helpers 
 
 echo "...Setting meep flags"
 export CFLAGS=" -fPIC"; export CXXFLAGS=" -fPIC"; export FFLAGS="-fPIC" 
