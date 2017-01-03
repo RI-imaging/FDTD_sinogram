@@ -9,7 +9,7 @@ before_install:
 - sudo apt-get update -qq
 install:
 # Install meep
-- sudo bash ./install_meep/debian.sh
+- sudo bash ./install_meep/install_meep_debian.sh
 # Using the major Python version in the conda installer fixes this error:
 #UnsatisfiableError: The following specifications were found to be in conflict:
 #  - enum34 -> python 2.6*|2.7*|3.3*
