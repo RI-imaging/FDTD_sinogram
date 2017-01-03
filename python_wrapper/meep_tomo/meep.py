@@ -136,7 +136,7 @@ def run_projection(angle, R, T, C, WDIR, P, remove_unfinished=True,
     # make sure directory exists
     mkdir(WDIR)
     if angle is None:
-        print("Compiling backgrund".format(angle))
+        print("Compiling background".format(angle))
         binary = make_binary(P, WDIR, 0, T, R, onlymedium=True,
                              Nmed=Nmed, Ncyt=Ncyt, Nnuc=Nnuc, Nleo=Nleo)
     else:
