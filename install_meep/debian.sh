@@ -2,6 +2,9 @@
 ## Stop if errors occur
 set -e
 
+## Go to script directory
+cd "$(dirname "$0")"
+
 ## --- Settings ---------------------------------------------------------------
 
 ## (Optional) Install utilities

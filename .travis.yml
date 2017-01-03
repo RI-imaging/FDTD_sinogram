@@ -18,16 +18,15 @@ before_install:
 - ./miniconda.sh -b -p ${INSTALL_DIR}/miniconda
 - export PATH=${INSTALL_DIR}/miniconda/bin:$PATH
 - conda update --yes conda
-- travis_retry conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy
-- travis_retry pip install .
+- conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy
+- pip install pytest
 install:
 - travis_retry pip install coverage
 - travis_retry pip install coveralls
-- python setup.py develop
 - pip freeze
 script:
 - cd python_wrapper
-- coverage run --source=meep_tomo ./setup.py test
+- coverage run --source=meep_tomo -m pytest
 - coverage report -m
 after_success:
 - coveralls --verbose
