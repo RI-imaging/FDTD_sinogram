@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 
 ## (Optional) Install utilities
 echo "...Installing utilities"
-sudo apt-get install -y python-matplotlib mayavi2 h5utils
+sudo apt-get install -y h5utils
 
 ## --- Build dependencies -----------------------------------------------------
 ## (list obtained from https://launchpad.net/ubuntu/quantal/+source/meep)

@@ -7,6 +7,8 @@ notifications:
     
 before_install:
 - sudo apt-get update -qq
+install:
+# Install meep
 - sudo bash ./install_meep/debian.sh
 # Using the major Python version in the conda installer fixes this error:
 #UnsatisfiableError: The following specifications were found to be in conflict:
@@ -18,14 +20,14 @@ before_install:
 - ./miniconda.sh -b -p ${INSTALL_DIR}/miniconda
 - export PATH=${INSTALL_DIR}/miniconda/bin:$PATH
 - conda update --yes conda
-- conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy
+- conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy matplotlib h5py
 - pip install pytest
-install:
-- travis_retry pip install coverage
-- travis_retry pip install coveralls
+- pip install coverage
+- pip install coveralls
 - pip freeze
 script:
 - cd python_wrapper
+- pip install -r requirements.txt
 - coverage run --source=meep_tomo -m pytest
 - coverage report -m
 after_success:

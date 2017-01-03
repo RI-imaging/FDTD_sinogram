@@ -1,6 +1,6 @@
 h5py
 matplotlib
 numpy
-PIL
+image
 scipy
 
