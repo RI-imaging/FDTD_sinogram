@@ -37,6 +37,8 @@ def test_run(ph="phantom_2d"):
     assert exists(join(empdir, "ez-000001.67.h5"))
     assert exists(join(empdir, "output.txt"))
     
+    assert mt.meep.simulation_completed(join(wdir, "empty_"+ph+".bin"))
+    
     mt.meep.run_projection(angle=0.1,
                            P=ph_file,
                            WDIR=wdir,
@@ -49,7 +51,23 @@ def test_run(ph="phantom_2d"):
     assert exists(join(epsdir, "ez-000001.67.h5"))
     assert exists(join(epsdir, "output.txt"))
 
+    assert mt.meep.simulation_completed(join(wdir, "eps_"+ph+"_0.1.bin"))
+
     shutil.rmtree(wdir)
+
+
+def test_run_tomography():
+
+    wdir = tempfile.mkdtemp(prefix="meep_test")
+    ph = "phantom_2d"
+    ph_file = join(phantom_dir, ph+".cpp")
+
+    mt.meep.run_tomography(A=3,
+                           P=ph_file,
+                           DIR=wdir,
+                           C=1,
+                           T=3,
+                           R=3)
 
 
 
