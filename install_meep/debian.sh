@@ -23,11 +23,12 @@ tar xzf libctl* && cd libctl-3.2.1/
 cd ..
 
 ## --- MEEP -------------------------------------------------------------------
-echo "...Installing meep dependencies"
+echo "...Installing meep dependencies 1"
 ## Skip this line if no multiprocessing used:
 meep_opt="--with-mpi"; sudo apt-get -y install openmpi-bin libopenmpi-dev
 ## Install really everything that has to do with hdf5
-sudo apt-get -y install libhdf5-openmpi-dev libhdf5-serial-dev hdf5-tools h5utils
+echo "...Installing meep dependencies 2"
+sudo apt-get -y -f -m --with-new-pkgs install libhdf5-openmpi-dev libhdf5-serial-dev hdf5-tools h5utils
 # You might also want to try these:
 # sudo apt-get -y install libhdf5-openmpi-10 libhdf5-10 hdf5-helpers
 
