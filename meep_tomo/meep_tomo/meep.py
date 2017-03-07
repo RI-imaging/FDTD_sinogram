@@ -97,10 +97,10 @@ def compile_cpp(cpp_path, verbose=False):
     return bin_path
 
 
-def get_default_kwargs(phantom_template):
+def get_phantom_kwargs(phantom_cpp):
     """Returns a dict for all "#define" statements of a cpp file"""
     # read in the original cpp script
-    with open(phantom_template, "r") as fd:
+    with open(phantom_cpp, "r") as fd:
         script = fd.readlines()
     
     kwargs={}
@@ -275,7 +275,7 @@ def run_tomography(phantom_template, num_angles, dir_out, scale=1,
     for kk in pkwargs:
         pkwargs_lower[kk.lower()] = pkwargs[kk]
     # load default kwargs
-    npkw = get_default_kwargs(phantom_template)
+    npkw = get_phantom_kwargs(phantom_template)
     # update default kwargs with user-defined kwargs
     npkw.update(pkwargs_lower)
     for kk in npkw:

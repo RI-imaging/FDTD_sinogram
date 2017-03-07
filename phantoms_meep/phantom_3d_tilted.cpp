@@ -68,7 +68,7 @@
 #define WAVELENGTH 10.       // How many pixels for a wavelength?
 // A PML thickness of about half the wavelength is ok.
 // http://www.mail-archive.com/meep-discuss@ab-initio.mit.edu/msg00525.html
-#define PMLTHICKNESS 0.5 // PML thickness in wavelengths
+#define PMLSIZE 0.5 // PML thickness in wavelengths
 
 #define ONLYMEDIUM false
 
@@ -173,9 +173,9 @@ int main(int argc, char **argv) {
     master_printf("...Lateral object size [wavelengths]: %f \n", 2.0 * CYTOPLASM_A);
     master_printf("...Axial object size 1 [wavelengths]: %f \n", 2.0 * CYTOPLASM_B);
     master_printf("...Axial object size 2 [wavelengths]: %f \n", 2.0 * CYTOPLASM_C);
-    master_printf("...PML thickness [wavelengths]: %f \n", PMLTHICKNESS);
+    master_printf("...PML thickness [wavelengths]: %f \n", PMLSIZE);
     master_printf("...Medium RI: %f \n", MEDIUM_RI);
-    master_printf("...WAVELENGTH per wavelength [px]: %f \n", WAVELENGTH);
+    master_printf("...Sampling per vacuum wavelength [px]: %f \n", WAVELENGTH);
     master_printf("...Radial extension [px]: %f \n", sr * WAVELENGTH);
     master_printf("...Axial extension [px]: %f \n", sz * WAVELENGTH);
     master_printf("...Tilt in y-z plane [rad]: %f \n", TILT_PHI);
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
     grid_volume v = vol3d(sr,sr,sz,resolution); 
 
     master_printf("...Initializing structure \n");
-    structure s(v, eps, pml(PMLTHICKNESS)); // structure
+    structure s(v, eps, pml(PMLSIZE)); // structure
     //subpix averaging, tolerance (1e-4), maxeval (100 000)
     s.set_epsilon(eps,true,.01,1000);
     
@@ -208,10 +208,10 @@ int main(int argc, char **argv) {
     // Light propagates in z-direction
     // Sample is rotated alogn y axis
     //
-    // Light source is a plane at z = 2*PMLTHICKNESS
+    // Light source is a plane at z = 2*PMLSIZE
     // to not let the source sit in the PML
 
-    volume src_plane(vec(0.0,0.0,2*PMLTHICKNESS),vec(sr,sr,2*PMLTHICKNESS));
+    volume src_plane(vec(0.0,0.0,2*PMLSIZE),vec(sr,sr,2*PMLSIZE));
     
     f.add_volume_source(Ey,src,src_plane,one,1.0);
     master_printf("...Starting simulation \n");

@@ -57,7 +57,7 @@
 #define WAVELENGTH 13.       // How many pixels for a wavelength?
 // A PML thickness of about half the wavelength is ok.
 // http://www.mail-archive.com/meep-discuss@ab-initio.mit.edu/msg00525.html
-#define PMLTHICKNESS 0.5 // PML thickness in wavelengths
+#define PMLSIZE 0.5 // PML thickness in wavelengths
 
 #define ONLYMEDIUM false
 
@@ -150,9 +150,9 @@ int main(int argc, char **argv) {
     master_printf("...Lateral object size [wavelengths]: %f \n", 2.0 * CYTOPLASM_A);
     // take the largest number (A) here
     master_printf("...Axial object size [wavelengths]: %f \n", 2.0 * CYTOPLASM_B);
-    master_printf("...PML thickness [wavelengths]: %f \n", PMLTHICKNESS);
+    master_printf("...PML thickness [wavelengths]: %f \n", PMLSIZE);
     master_printf("...Medium RI: %f \n", MEDIUM_RI);
-    master_printf("...WAVELENGTH per wavelength [px]: %f \n", WAVELENGTH);
+    master_printf("...Sampling per vacuum wavelength [px]: %f \n", WAVELENGTH);
     master_printf("...Radial extension [px]: %f \n", sr * WAVELENGTH);
     master_printf("...Axial extension [px]: %f \n", sz * WAVELENGTH);
     
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
     grid_volume v = vol2d(sr,sz,resolution); 
 
     master_printf("...Initializing structure \n");
-    structure s(v, eps, pml(PMLTHICKNESS)); // structure
+    structure s(v, eps, pml(PMLSIZE)); // structure
     s.set_epsilon(eps,true); //switch eps averaging on or off
 
     master_printf("...Initializing fields \n");
@@ -177,9 +177,9 @@ int main(int argc, char **argv) {
     master_printf("...Adding light source \n");
     // Wavelength is one unit. Since c=1, frequency is also 1.
     continuous_src_time src(1.);
-    // Light source is a plane at z = 2*PMLTHICKNESS
+    // Light source is a plane at z = 2*PMLSIZE
     // to not let the source sit in the PML
-    volume src_plane(vec(0.0,2*PMLTHICKNESS),vec(sr,2*PMLTHICKNESS));
+    volume src_plane(vec(0.0,2*PMLSIZE),vec(sr,2*PMLSIZE));
     
     f.add_volume_source(Ez,src,src_plane,one,1.0);
     master_printf("...Starting simulation \n");

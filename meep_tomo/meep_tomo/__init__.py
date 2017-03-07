@@ -6,7 +6,7 @@ import warnings
 
 from .meep import run_projection, run_tomography
 from .plot_phantom import plot_phantom
-from . import meta, meep
+from . import meep
 
 try:
     from . import postproc

@@ -1,7 +1,9 @@
-""" Export 3D FDTD simulation as compressed lzma
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Export 3D FDTD simulation as compressed lzma
 
-    I use this file to compress ~600MB of data by a factor of 1000 using
-    lzma compression. The data is downsampled with the parameter `skip`
+I use this file to compress ~600MB of data by a factor of 1000 using
+lzma compression. The data is downsampled with the parameter `skip`
 """
 from __future__ import division, print_function, unicode_literals
 

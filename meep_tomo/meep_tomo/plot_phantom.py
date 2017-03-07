@@ -4,7 +4,7 @@ from __future__ import division, print_function, unicode_literals
 
 import numpy as np
 
-from . import meta, plot
+from . import plot
 
 
 def SetEllipseInArray(array, val, x, y, a, b, phi, sampling, phi_tot):
