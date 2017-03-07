@@ -16,7 +16,7 @@ import os
 from PIL import Image # install python image library (PIL)
 from scipy.interpolate import interp1d
 
-from .common import mkdir
+from .common import mkdir_p
 
 def arr2im(arr, cut=False, scale=False, invert=False):
     """ Convert the real part of an array to an image.

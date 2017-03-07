@@ -8,11 +8,11 @@
 # include <complex>
 
 
-// Do not set this time too short. Wee need the system to equilibrate.
-// Very good agreement with  "#define TIME 1000000"
-// This worked well with     "#define TIME 100000"
-// This worked worse with    "#define TIME 10000"
-#define TIME 15000
+// Do not set this TIMESTEPS too short. Wee need the system to equilibrate.
+// Very good agreement with  "#define TIMESTEPS 1000000"
+// This worked well with     "#define TIMESTEPS 100000"
+// This worked worse with    "#define TIMESTEPS 10000"
+#define TIMESTEPS 15000
 
 // Coordinates
 // The cytoplasm is centered at the origin.  All coordinates are
@@ -22,7 +22,7 @@
 // and x-axis in radians.
 
 // rotation in x-z
-#define ACQUISITION_PHI .02
+#define ANGLE .02
 
 // the tilting angle w.r.t. the imaging plane
 #define TILT_PHI 0.2
@@ -65,7 +65,7 @@
 // http://ab-initio.mit.edu/wiki/index.php/Meep_Tutorial
 // In general, at least 8 pixels/wavelength in the highest
 // dielectric is a good idea.
-#define SAMPLING 10.       // How many pixels for a wavelength?
+#define WAVELENGTH 10.       // How many pixels for a wavelength?
 // A PML thickness of about half the wavelength is ok.
 // http://www.mail-archive.com/meep-discuss@ab-initio.mit.edu/msg00525.html
 #define PMLTHICKNESS 0.5 // PML thickness in wavelengths
@@ -90,9 +90,9 @@ double eps(const vec &p)
         double cozt = coy*sin(TILT_PHI) + coz*cos(TILT_PHI);
         
         // Rotation in x-z (around rotational axis y)
-        double rottx = coxt*cos(ACQUISITION_PHI) - cozt*sin(ACQUISITION_PHI);
+        double rottx = coxt*cos(ANGLE) - cozt*sin(ANGLE);
         double rotty = coyt;
-        double rottz = coxt*sin(ACQUISITION_PHI) + cozt*cos(ACQUISITION_PHI);
+        double rottz = coxt*sin(ANGLE) + cozt*cos(ANGLE);
 
         // Cytoplasm
         double crotx = rottx;
@@ -130,7 +130,7 @@ double eps(const vec &p)
 }
 
 
-complex<double> one(const vec &p) 
+std::complex<double> one(const vec &p)
 {   
     return 1.0;
     //source modulation
@@ -147,8 +147,8 @@ int main(int argc, char **argv) {
     //
     // determine the size of the copmutational volume
     // 1. The wavelength defines the grid size. One wavelength
-    //    is sampled with SAMPLING pixels.
-    double resolution = SAMPLING;
+    //    is sampled with WAVELENGTH pixels.
+    double resolution = WAVELENGTH;
     // The lateral extension sr of the computational grid.
     // make sure sr is even
     double sr = LATERALSIZE;
@@ -175,9 +175,9 @@ int main(int argc, char **argv) {
     master_printf("...Axial object size 2 [wavelengths]: %f \n", 2.0 * CYTOPLASM_C);
     master_printf("...PML thickness [wavelengths]: %f \n", PMLTHICKNESS);
     master_printf("...Medium RI: %f \n", MEDIUM_RI);
-    master_printf("...Sampling per wavelength [px]: %f \n", SAMPLING);
-    master_printf("...Radial extension [px]: %f \n", sr * SAMPLING);
-    master_printf("...Axial extension [px]: %f \n", sz * SAMPLING);
+    master_printf("...WAVELENGTH per wavelength [px]: %f \n", WAVELENGTH);
+    master_printf("...Radial extension [px]: %f \n", sr * WAVELENGTH);
+    master_printf("...Axial extension [px]: %f \n", sz * WAVELENGTH);
     master_printf("...Tilt in y-z plane [rad]: %f \n", TILT_PHI);
     int clock0=clock();
 
@@ -201,7 +201,7 @@ int main(int argc, char **argv) {
 
     master_printf("...Adding light source \n");
     // Wavelength is one unit. Since c=1, frequency is also 1.
-    continuous_src_time src(1.); 
+    continuous_src_time src(1.);
     // Volume is a cube in 3 dimensions
     // two corners identify that cube
     //
@@ -217,9 +217,9 @@ int main(int argc, char **argv) {
     master_printf("...Starting simulation \n");
 
 
-    for (int i=0; i<TIME;i++) { 
+    for (int i=0; i<TIMESTEPS;i++) {
         f.step();
-        if ( i == TIME - 1){
+        if ( i == TIMESTEPS - 1){
             f.output_hdf5(Ey,v.surroundings(),0,true,false,0);
         }
     }

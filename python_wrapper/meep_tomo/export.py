@@ -10,7 +10,11 @@ from os.path import join
 import numpy as np
 import tempfile
 
-import lzma     # requires Python3
+try:
+    import lzma
+except ImportError:
+    from backports import lzma
+
 import tarfile
 
 

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Test if we can compile the phantoms
-"""
 from __future__ import division, print_function
 
 import numpy as np
@@ -20,32 +18,18 @@ import meep_tomo as mt
 phantom_dir = join(dirname(parent_dir), "phantoms_meep")
 
 
-def test_compile(ph="phantom_2d"):
+def test_wrongkey(ph="phantom_2d"):
     wdir = tempfile.mkdtemp(prefix="meep_test")
     ph_file = join(phantom_dir, ph+".cpp")
-    bin_path = join(wdir, ph+".bin")
-    cpp_path = join(wdir, ph+".cpp")
-    log_path = join(wdir, ph+"_compile.log")
+    bin_path = join(wdir, ph)
     
-    mt.meep.make_binary(phantom_template=ph_file,
-                        bin_path=bin_path,
-                        verbose=1)
-
-    assert exists(log_path)
-    # The source file
-    assert exists(cpp_path)
-    # The binary
-    assert exists(bin_path)
-    
-    shutil.rmtree(wdir, ignore_errors=True)
-
-
-def test_compile_all():
-    """Test all phantom files"""
-    phs = [p for p in os.listdir(phantom_dir) if p.endswith(".cpp") ]
-    for p in phs:
-        print("test compiling: ", p)
-        test_compile(p[:-4])
+    try:
+        mt.meep.make_binary(phantom_template=ph_file,
+                            bin_path=bin_path,
+                            verbose=1,
+                            hastalavista=42)
+    except KeyError:
+        pass
 
 
 if __name__ == "__main__":

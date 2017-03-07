@@ -2,288 +2,357 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
 
-import argparse
 import multiprocessing as mp
 import numpy as np
 import os
+import shutil
 import time
-import warnings
 
-from .common import mkdir
-
-
-# Default values. DO NOT CHANGE!
-_Nmed = 1.333
-_Ncyt = 1.365
-_Nnuc = 1.360
-_Nleo = 1.387
+from .common import mkdir_p
 
 
-
-def create_cpp(P, A, T, R, onlymedium=True,
-               Nmed=_Nmed, Ncyt=_Ncyt, Nnuc=_Nnuc, Nleo=_Nleo,
-               scale=None):
-    CPPSCRIPT = os.path.split(P)[1]
-    if onlymedium:
-        EPS = "empty_{}".format(CPPSCRIPT[:-4], A)
-        med = "true"
-    else:
-        EPS = "eps_{}_{}".format(CPPSCRIPT[:-4], A)
-        med = "false"
-        
+def create_cpp(phantom_template, cpp_path, **pkwargs):
+    """Create a MEEP simulation C++ script from a phantom template
+    
+    Parameters
+    ----------
+    phantom_template: str
+        Path to a phantom C++ script
+    cpp_path: str
+        Path to the resulting C++ script
+    pkwargs: dict
+        The kwargs are used to set the parameters that are
+        given with "#define"-statements in `phantom_template`.
+        The names can be mixed upper- and lower-case. However, 
+        in the C++ template, they should be all-caps.
+    """ 
     # read in the original cpp script
-    f = open(P, "r")
-    d = f.readlines()
-    f.close()
+    with open(phantom_template, "r") as fd:
+        script = fd.readlines()
     
-    replacing = [
-                 [ "ACQUISITION_PHI", float(A)],
-                 [ "TIME", float(T)],
-                 [ "SAMPLING", float(R)],
-                 [ "MEDIUM_RI", float(Nmed)],
-                 [ "CYTOPLASM_RI", float(Ncyt)],
-                 [ "NUCLEUS_RI", float(Nnuc)],
-                 [ "NUCLEOLUS_RI", float(Nleo)],
-                 [ "ONLYMEDIUM", med]
-                ]
+    for key in pkwargs:
+        string = "#define {} ".format(key.upper())
+        # Add lower() to correctly map True/False
+        value = "{}".format(pkwargs[key]).lower()
+        for ii in range(len(script)):
+            if script[ii].startswith(string):
+                script[ii] = "{} {}\n".format(string, value)
+                break
+        else:
+            msg="'#define {}' not found in {}!".format(key.upper(),
+                                                       phantom_template)
+            raise KeyError(msg)
+        
     
-    for item in replacing:
-        string = "#define {} ".format(item[0])
-        value = item[1]
-        for i in range(len(d)):
-            if d[i].count(string) > 0:
-                d[i] = "{} {}\n".format(string, value)
-    
-    if scale is not None:
-        # scale all size parameters of the cell with scale
-        scaling = [ "_A", "_B", "_C", "_X", "_Y", "_Z" ]
-        for item in scaling:
-            for i in range(len(d)):
-                triplet = d[i].split()
-                if (len(triplet) == 3 and
-                    triplet[0] == "#define" and
-                    triplet[1].endswith(item)   ):
-                    newval = float(triplet[2])*scale
-                    d[i] = "{}  {}  {}\n".format(
-                            triplet[0], triplet[1], newval)
-    
-    return EPS, d
+    with open(cpp_path, "w") as fd:
+        fd.writelines(script)
 
 
-def compile_cpp(cpp_lines, WDIR, EPS):
+def compile_cpp(cpp_path, verbose=False):
+    """Compile a cpp file for usage with meep
+    
+    Parameters
+    ----------
+    cpp_path: str
+        Full path to C++ file
+    verbose: bool
+        Save output of g++ to log file
+
+    Returns
+    -------
+    bin_path: str
+        Full path to the compiled binary
+    
+    Notes
+    -----
+    The resulting binaries can be executed with 
+    
+        mpirun `bin_file`
+    """
+    assert cpp_path.endswith(".cpp")
+    bin_path = cpp_path[:-4]+".bin"
+    
     gpplib = " -lmeep_mpi -lhdf5 -lz -lgsl -lharminv -llapack "+\
              "-lcblas -latlas -lfftw3 -lm "
-    
-    # copy cpp script
-    eps = open(os.path.join(WDIR,EPS+".cpp"), "w")
-    eps.writelines(cpp_lines)
-    eps.close()
 
     library_paths = "-L/usr/include/hdf5/serial/ "+\
                     "-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ "+\
                     "-L/usr/lib/x86_64-linux-gnu/hdf5/serial/ "+\
                     "-L/usr/local/lib/"
 
-    runstring = "g++ {} -malign-double {} -o {}  {} 2>&1 | tee {}".format(
+    runstring = "g++ {} -malign-double {} -o {}  {} 2>&1".format(
                  library_paths,
-                 os.path.join(WDIR,EPS+".cpp"),
-                 os.path.join(WDIR,EPS+".bin"),
-                 gpplib,
-                 os.path.join(WDIR,"compile.txt"))
-    binfilename = os.path.join(WDIR,EPS+".bin")
+                 os.path.join(cpp_path),
+                 os.path.join(bin_path),
+                 gpplib)
 
-    if not os.path.exists(binfilename):
-        os.system(runstring)
-        time.sleep(0.1)
+    if verbose:
+        log_path = cpp_path[:-4]+"_compile.log"
+        runstring += " | tee {}".format(log_path)
 
-    return binfilename
+    if os.path.exists(bin_path):
+        os.remove(bin_path)
+    os.system(runstring)
+
+    return bin_path
 
 
-def make_binary(P, WDIR, A, T, R, onlymedium=True,
-                Nmed=_Nmed, Ncyt=_Ncyt, Nnuc=_Nnuc, Nleo=_Nleo):
-    """
-        Copies the original cpp script into subdirectories for eps and
-        empty samples and replaces the definitions:
-        
-            - ONLYMEDIUM
-            - ACQUISITION_PHI
-            - refractive indices
+def get_default_kwargs(phantom_template):
+    """Returns a dict for all "#define" statements of a cpp file"""
+    # read in the original cpp script
+    with open(phantom_template, "r") as fd:
+        script = fd.readlines()
     
-        The result is a directory WDIR that contains several binaries
-        
-            g++ -malign-double twodphantom.cpp -o twodphantom.bin -lmeep_mpi -lhdf5 -lz -lgsl -lharminv -llapack -lcblas -latlas -lfftw3 -lm
-
-        
-        that end with .bin and which can then be executed using
-
-            mpirun -n 7 ./twodphantom.bin 2>&1 | tee output.txt >> /dev/null
-            
-        Errors and compile messages are displayed on stdout and are
-        written to a text file in WDIR.
-    """
-    EPS, d = create_cpp(P, A, T, R, onlymedium=onlymedium,
-                   Nmed=Nmed, Ncyt=Ncyt, Nnuc=Nnuc, Nleo=Nleo)
-
-    return compile_cpp(d, WDIR, EPS)
-
-
-def run_projection(angle, R, T, C, WDIR, P, remove_unfinished=True,
-                   Nmed=_Nmed, Ncyt=_Ncyt, Nnuc=_Nnuc, Nleo=_Nleo):
-    """ If angle is None, the background will be computed and the
-    refractive indices will be ignored.
+    kwargs={}
+    for ii in range(len(script)):
+        if script[ii].startswith("#define"):
+            splitted = script[ii].split()
+            key = splitted[1].lower()
+            val = splitted[2].lower()
+            if val == "true":
+                val = True
+            elif val == "false":
+                val = False
+            elif val.count("."):
+                val = float(val)
+            else:
+                val = int(val)
+            kwargs[key] = val
     
+    return kwargs
+
+
+def make_binary(phantom_template, bin_path, verbose=False, **pkwargs):
+    """Compile a meep binary with custom parameters from a C++ phantom template
+    
+    Parameters
+    ----------
+    phantom_template: str
+        Path to a phantom template
+    bin_path: str
+        Path to the resulting binary. The extension ".bin" is appended
+        if non-existent.
+    pkwargs: dict
+        The kwargs are used to set the parameters that are
+        given with "#define"-statements in `phantom_template`.
+        The names can be mixed upper- and lower-case. However, 
+        in the C++ template, they should be all-caps.
     """
+    if not bin_path.endswith(".bin"):
+        bin_path += ".bin"
+    
+    cpp_path = bin_path[:-4]+".cpp"
+    create_cpp(phantom_template=phantom_template,
+               cpp_path=cpp_path,
+               **pkwargs)
+    # this will create `bin_path`
+    compile_cpp(cpp_path, verbose=verbose)
+
+
+def run_projection(phantom_template, dir_out,
+                   num_cpus=mp.cpu_count(), remove_unfinished=True,
+                   verbose=0, **pkwargs):
+    """Run a meep simulation for a phantom
+    
+    Paramters
+    ---------
+    phantom_template: str
+        Path to a phantom template
+    dir_out: str
+        Output directory where cpp, bin, and log files will be created
+    num_cpus: bool
+        Number of CPUs to use with mpirun
+    remove_unfinished: bool
+        Remove files from unfinished simulations before starting anew
+    verbose: int
+        Increases verbosity
+    pkwargs: dict
+        The kwargs are used to set the parameters that are
+        given with "#define"-statements in `phantom_template`.
+        The names can be mixed upper- and lower-case. However, 
+        in the C++ template, they should be all-caps.
+        `pkwargs` must at least contain the "angle" keyword
+        if `pkwargs["onlymedium"]` is `False`.
+    """
+    phtbase = os.path.basename(phantom_template)
     # make sure directory exists
-    mkdir(WDIR)
-    if angle is None:
-        print("Compiling background".format(angle))
-        binary = make_binary(P, WDIR, 0, T, R, onlymedium=True,
-                             Nmed=Nmed, Ncyt=Ncyt, Nnuc=Nnuc, Nleo=Nleo)
+    mkdir_p(dir_out)
+    # make lower-case
+    npkw = {}
+    for kk in pkwargs:
+        npkw[kk.lower()] = pkwargs[kk]
+
+    if "onlymedium" in npkw and npkw["onlymedium"]==True:
+        bin_base = "bg_{}.bin".format(phtbase[:-4])
+        if verbose:
+            print("...Compiling background")
     else:
-        print("Compiling angle {}".format(angle))
-        binary = make_binary(P, WDIR, angle, T, R, onlymedium=False,
-                             Nmed=Nmed, Ncyt=Ncyt, Nnuc=Nnuc, Nleo=Nleo)
-    os.chdir(WDIR)
-    if not simulation_completed(binary, 
+        assert "angle" in pkwargs, "`pkwargs` must contain the 'angle' key"
+        npkw["onlymedium"] = False
+        bin_base = "ph_{}_{:.10f}.bin".format(phtbase[:-4], pkwargs["angle"])
+        if verbose:
+            print("...Compiling angle {:.3f}".format(npkw["angle"]))
+
+    bin_path = os.path.join(dir_out, bin_base)
+    #This output directory is some kind of default in meep
+    outdir = bin_path[:-4]+"-out"
+    make_binary(phantom_template=phantom_template,
+                bin_path=bin_path,
+                verbose=verbose,
+                **pkwargs)
+
+    prevdir = os.path.abspath(os.curdir)
+    os.chdir(dir_out)
+    if not simulation_completed(bin_path, 
                                 remove_unfinished=remove_unfinished):
-        outputname = binary[:-4]+"_output.txt"
-        print("Running {}".format(binary))
+        base_bin_path = os.path.basename(bin_base)
+        logfile = base_bin_path[:-4]+"_exec.log"
+        if verbose:
+            print("...Executing {}".format(bin_base))
         runstring = "mpirun -n {} {} 2>&1 | tee {} ".format(
-                    C, binary, outputname)
+                    num_cpus, base_bin_path, logfile)
         os.system(runstring)
-        outdir = binary[:-4]+"-out"
-        os.rename(os.path.join(WDIR, outputname),
-                  os.path.join(outdir, "output.txt"))
+        # copy log file
+        os.rename(os.path.join(dir_out, logfile),
+                  os.path.join(outdir, logfile))
+        # copy cpp file
+        os.rename(bin_path[:-4]+".cpp",
+                  os.path.join(outdir, os.path.basename(bin_path[:-4]+".cpp")))
+        # remove binary
+        os.remove(bin_path)
     else:
-        print("Simulation already completed.")
+        if verbose:
+            print("...Simulation already completed.")
+    os.chdir(prevdir)
+    
+    return outdir
 
 
-def run_tomography(A, R, T, C, DIR, P, remove_unfinished=True,
-                   Nmed=_Nmed, Ncyt=_Ncyt, Nnuc=_Nnuc, Nleo=_Nleo):
-    ## Create binaries
-    # Create output directory
-    script = os.path.split(P)[1]
-    dname = "{}_A{:04d}_R{:02d}_T{:08d}_Nmed{}_Ncyt{}_Nnuc{}_Nleo{}/".\
-            format(script[:-4], A, R, T, Nmed, Ncyt, Nnuc, Nleo)
-    WDIR = os.path.join(DIR, dname)
-    print("Creating directory: {}".format(WDIR))
-    mkdir(WDIR)
+def run_tomography(phantom_template, num_angles, dir_out, scale=1, 
+                   scale_vars_end=["_A", "_B", "_C", "_X", "_Y", "_Z"],
+                   remove_unfinished=True, verbose=0,
+                   **pkwargs):
+    """Run a tomographic series of projections
+    
+    Parameters
+    ----------
+    phantom_template: str
+        Path to a phantom template
+    num_angles: int
+        Number of angles to compute over the range [0,2PI)
+    dir_out: str
+        Path to the simulation output directory
+    scale: float
+        Scales the phantom size (see `scale_vars_end`)
+    scale_vars_end: list of str
+        The items of the list define the end of the names
+        of the variables that will be scaled, e.g. by default,
+        all variables that end with "_A" such as "CYTOPLASM_A"
+        are scaled by one.
+    remove_unfinished: bool
+        Remove files from unfinished simulations before starting anew
+    verbose: int
+        Increases verbosity
+    pkwargs: dict
+        The kwargs are used to set the parameters that are
+        given with "#define"-statements in `phantom_template`.
+        The names can be mixed upper- and lower-case. However, 
+        in the C++ template, they should be all-caps.
+
+    See Also
+    --------
+    run_projection: this method is called for each projection
+
+    Notes
+    -----
+    The phantom files must have "#define" statements for at least
+    "ANGLE" and "ONLYMEDIUM".
+    """
+    # scaling variable identifiers
+    scale_vars_end = list(set(scale_vars_end))
+    # convert pkwargs to lower-case and scale keyword arguments    
+    pkwargs_lower = {}
+    for kk in pkwargs:
+        pkwargs_lower[kk.lower()] = pkwargs[kk]
+    # load default kwargs
+    npkw = get_default_kwargs(phantom_template)
+    # update default kwargs with user-defined kwargs
+    npkw.update(pkwargs_lower)
+    for kk in npkw:
+        if scale != 1:
+            for end in scale_vars_end:
+                if kk.endswith(end.lower()):
+                    npkw[kk]*=scale
     # Run background:
-    run_projection(None, R, T, C, WDIR, P,
-                   Nmed=Nmed, Ncyt=Ncyt, Nnuc=Nnuc, Nleo=Nleo)
-
-    angles = np.linspace(0, 2*np.pi, A, endpoint=False)
+    npkw["onlymedium"] = True
+    run_projection(phantom_template=phantom_template,
+                   dir_out=dir_out,
+                   remove_unfinished=remove_unfinished,
+                   verbose=verbose,
+                   **npkw)
+    # Run other phantom projections
+    npkw["onlymedium"] = False
+    angles = np.linspace(0, 2*np.pi, num_angles, endpoint=False)
 
     for angle in angles:
-        run_projection(angle, R, T, C, WDIR, P, 
+        npkw["angle"] = angle
+        run_projection(phantom_template=phantom_template,
+                       dir_out=dir_out,
                        remove_unfinished=remove_unfinished,
-                       Nmed=Nmed, Ncyt=Ncyt, Nnuc=Nnuc, Nleo=Nleo)
+                       verbose=verbose,
+                       **npkw)
 
 
 def simulation_completed(path, remove_unfinished=False, verbose=0):
-    """ Check if a FDTD simulation was completed successfully.
+    """Check if an FDTD simulation was completed successfully
     
-    The argument is a binary `.bin` file.
+    This will check whether a `run_projection` completed successfully
     
-    This is usually the case if `path[:-4]+"-out"` exists and there are
-    h5 files in it.
-    """
-    if path.endswith("/"):
-        path = os.path.dirname(path)
-    
-    if ( path.endswith(".bin") or 
-           path.endswith(".cpp") or 
-           path.endswith("-out") ):
-        pass
-    else:
-        if verbose > 0:
-            warnings.warn("Path has unknown ending: {}".format(path))
+    Paramters
+    ---------
+    path: str
+        Path to the simulation  C++, binary or "-out" folder
+    remove_unfinished: bool
+        Remove unfinished simulation files. This removes the "-out"
+        folder which is important for subsequent simulations, because
+        meep will name subsequent folders "-out1", etc. which would
+        break our analysis pipeline.
 
-    folder = path[:-4]+"-out"
-    if verbose > 1:
-        print("Searching: ", folder)
+    Notes
+    -----
+    Each simulation is run in a separate folder. Meep creates the "-out"
+    folder in those folders that contains the simulation result in the h5
+    file format. 
+    """
+    if ( path.endswith(".bin") or 
+         path.endswith(".cpp") or 
+         path.endswith("-out") ):
+        out_path = path[:-4]+"-out"
+    else:
+        raise ValueError("Path must be a C++, binary file or output folder!")
     
-    if os.path.isdir(folder):
-        files = os.listdir(folder)
+    if os.path.isdir(out_path):
+        files = os.listdir(out_path)
         ok_counter = 0
         for f in files:
-            if ( (f.startswith("eps") and f.endswith(".h5")) or
+            if ( #phantom eps structure file 
+                 (f.startswith("eps") and f.endswith(".h5")) or
+                 #fields results file
                  ((f.startswith("ez") or f.startswith("ey")) and
                    f.endswith(".h5")) or
-                 ((f.startswith("eps") or f.startswith("empty")) and 
+                 #simulation cpp script (is copied there afterwards)
+                 ((f.startswith("ph") or f.startswith("bg")) and 
                    f.endswith(".cpp")) or
-                 ( f == "output.txt" )
+                 #execution log file
+                 ( f.endswith == "_exec.log" )
                 ):
                 ok_counter += 1
-        if ok_counter >= 4:
+        if ok_counter < 4:
             return True
         elif remove_unfinished:
-            print("Removing unfinished simulation: {}".format(folder))
-            print("Press Ctrl+C to abort. You have 5s.")
+            print("...Removing unfinished simulation: {}".format(out_path))
+            print("...Press Ctrl+C to abort. You have 5s.")
             time.sleep(5)
-            for f in files:
-                print("Deleting {}".format(f))
-                os.remove(os.path.join(folder,f))
-            os.rmdir(folder)
-            print("Deleting {}".format(folder))
-    # default
+            shutil.rmtree(out_path, ignore_errors=True)
+            print("...Deleted.")
     return False
-
-
-
-if __name__ == "__main__":
-    ## Parse all arguments
-    C = mp.cpu_count()
-    WDIR = os.path.dirname(os.path.abspath(__file__))
-    P = os.path.join(WDIR, "phantom_2d.cpp")
-    DIR = os.path.join(WDIR, "simulations")
-    parser = argparse.ArgumentParser(
-            description='Finite difference timed domain (FDTD) '+\
-                        'tomographic data acquisition.',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-a', '--angles',  metavar='A', type=int,
-                        default=100,
-                        help='total number of acquisition angles')
-    parser.add_argument('-c', '--cpus', metavar='C', type=int,
-                        default=C,
-                        help='number of CPUs'.format(C))
-    parser.add_argument('-d', '--directory', metavar='DIR', type=str,
-                        default=DIR, 
-                        help='output directory'.format(DIR))
-    parser.add_argument('-p', '--phantom_script', metavar='P', type=str,
-                        default=P,
-                        help='dielectric phantom'.format(P))
-    parser.add_argument('-r', '--resolution', metavar='R', type=int,
-                        default=13,
-                        help='number of pixels per wavelength (in vacuum)')
-    parser.add_argument('-t', '--timesteps',  metavar='T', type=int,
-                        default=15000,
-                        help='number of FDTD time steps to perform')
-    parser.add_argument('--medium',  metavar='Nmed', type=float,
-                        default=_Nmed,
-                        help='Refractive index of medium')
-    parser.add_argument('--cytoplasm',  metavar='Ncyt', type=float,
-                        default=_Ncyt,
-                        help='Refractive index of cytoplasm')
-    parser.add_argument('--nucleus',  metavar='Nnuc', type=float,
-                        default=_Nnuc,
-                        help='Refractive index of nucleus')
-    parser.add_argument('--nucleolus',  metavar='Nleo', type=float,
-                        default=_Nleo,
-                        help='Refractive index of nucleolus')
-
-
-    args = parser.parse_args()
-    A = args.angles
-    R = args.resolution
-    T = args.timesteps
-    C = args.cpus
-    DIR = os.path.abspath(args.directory)
-    P = os.path.abspath(args.phantom_script)
-    Nmed = args.medium
-    Ncyt = args.cytoplasm
-    Nnuc = args.nucleus
-    Nleo = args.nucleolus
-    
-    run_tomography(A, R, T, C, DIR, P, 
-                   Nmed=Nmed, Ncyt=Ncyt, Nnuc=Nnuc, Nleo=Nleo)

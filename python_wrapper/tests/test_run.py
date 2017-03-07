@@ -10,6 +10,7 @@ from os.path import abspath, basename, dirname, join, split, exists
 import shutil
 import sys
 import tempfile
+from scipy.io.wavfile import WAVE_FORMAT_EXTENSIBLE
 
 # Add parent directory to beginning of path variable
 parent_dir = dirname(dirname(abspath(__file__)))
@@ -20,55 +21,74 @@ import meep_tomo as mt
 phantom_dir = join(dirname(parent_dir), "phantoms_meep")
 
 
-def test_run(ph="phantom_2d"):
-    wdir = tempfile.mkdtemp(prefix="meep_test")
-    ph = "phantom_2d"
+def stest_run():
+    ph="phantom_2d"
+    timesteps=10
+    wavelength=3.0
+    wdir = tempfile.mkdtemp(prefix="meep_test_")
     ph_file = join(phantom_dir, ph+".cpp")
 
-    mt.meep.run_projection(angle=None,
-                           P=ph_file,
-                           WDIR=wdir,
-                           C=1,
-                           T=10,
-                           R=3)
+    bgdir = mt.meep.run_projection(phantom_template=ph_file,
+                                   onlymedium=True,
+                                   dir_out=wdir,
+                                   timesteps=timesteps,
+                                   wavelength=wavelength)
 
-    empdir = join(wdir, "empty_"+ph+"-out")
-    assert exists(join(empdir, "eps-000000.00.h5"))
-    assert exists(join(empdir, "ez-000001.67.h5"))
-    assert exists(join(empdir, "output.txt"))
+    assert exists(join(bgdir, "eps-000000.00.h5"))
+    assert exists(join(bgdir, "ez-000001.67.h5"))
+    assert exists(join(bgdir, "bg_"+ph+"_exec.log"))
+    assert mt.meep.simulation_completed(bgdir)
     
-    assert mt.meep.simulation_completed(join(wdir, "empty_"+ph+".bin"))
-    
-    mt.meep.run_projection(angle=0.1,
-                           P=ph_file,
-                           WDIR=wdir,
-                           C=1,
-                           T=10,
-                           R=3)
+    angle=0.1
+    phdir = mt.meep.run_projection(phantom_template=ph_file,
+                                   angle=angle,
+                                   dir_out=wdir,
+                                   onlymedium=False,
+                                   timesteps=timesteps,
+                                   wavelength=wavelength)
 
-    epsdir = join(wdir, "eps_"+ph+"_0.1-out")
-    assert exists(join(epsdir, "eps-000000.00.h5"))
-    assert exists(join(epsdir, "ez-000001.67.h5"))
-    assert exists(join(epsdir, "output.txt"))
-
-    assert mt.meep.simulation_completed(join(wdir, "eps_"+ph+"_0.1.bin"))
+    assert exists(join(phdir, "eps-000000.00.h5"))
+    assert exists(join(phdir, "ez-000001.67.h5"))
+    assert mt.meep.simulation_completed(phdir)
 
     shutil.rmtree(wdir)
 
 
-def test_run_tomography():
-
-    wdir = tempfile.mkdtemp(prefix="meep_test")
+def stest_run_tomography():
+    wdir = tempfile.mkdtemp(prefix="meep_test_")
     ph = "phantom_2d"
     ph_file = join(phantom_dir, ph+".cpp")
 
-    mt.meep.run_tomography(A=3,
-                           P=ph_file,
-                           DIR=wdir,
-                           C=1,
-                           T=3,
-                           R=3)
+    mt.meep.run_tomography(phantom_template=ph_file,
+                           num_angles=3,
+                           dir_out=wdir,
+                           timesteps=3,
+                           wavelength=3.0,
+                           verbose=1)
+    
+    shutil.rmtree(wdir)
 
+
+def test_run_tomography_scale():
+    wdir = tempfile.mkdtemp(prefix="meep_test_")
+    ph = "phantom_2d"
+    ph_file = join(phantom_dir, ph+".cpp")
+
+    mt.meep.run_tomography(phantom_template=ph_file,
+                           num_angles=3,
+                           scale=2,
+                           dir_out=wdir,
+                           timesteps=3,
+                           wavelength=3.0,
+                           verbose=1)
+    cpfile = "ph_phantom_2d_0.0000000000-out/ph_phantom_2d_0.0000000000.cpp"
+    cppath = os.path.join(wdir, cpfile)
+    with open(cppath, "r") as fd:
+        script = fd.read()
+    # The default is "#define NUCLEOLUS_Y  2.0"
+    assert script.count("#define NUCLEOLUS_Y  4.0")
+
+    shutil.rmtree(wdir)
 
 
 if __name__ == "__main__":
