@@ -1,8 +1,8 @@
-# meep_tomo
+meep_tomo
+=========
 A Python wrapper for tomography using MEEP C++ scripts 
 
 |Build Status| |Coverage Status|
-
 
 
 To install all dependencies, run
