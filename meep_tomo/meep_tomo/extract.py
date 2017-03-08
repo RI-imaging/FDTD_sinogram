@@ -7,7 +7,7 @@ import numpy as np
 import os
 import warnings
 
-from . import meep
+from . import meep, common
 
 
 def crop_arr(arr, crop):
@@ -315,7 +315,13 @@ def get_tomo_ri_structure(tomo_path, crop_pml=True):
         Path to a tomographic simulation series
     """
     _bg, phs = get_tomo_dirlist(tomo_path)
-    riref = get_ri_structure(phs[0], crop_pml=crop_pml)
+    npyfile = os.path.abspath(tomo_path)+"_results/ri_structure.npy"
+    common.mkdir_p(os.path.dirname(npyfile))
+    if not os.path.exists(npyfile):
+        riref = get_ri_structure(phs[0], crop_pml=crop_pml)
+        np.save(npyfile, riref)
+    else:
+        riref = np.load(npyfile)
     return riref
 
 

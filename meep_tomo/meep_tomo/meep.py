@@ -185,26 +185,28 @@ def run_projection(phantom_template, dir_out,
     if "onlymedium" in npkw and npkw["onlymedium"]==True:
         bin_base = "bg_{}.bin".format(phtbase[:-4])
         if verbose:
-            print("...Compiling background")
+            print("...Running background")
     else:
         assert "angle" in pkwargs, "`pkwargs` must contain the 'angle' key"
         npkw["onlymedium"] = False
-        bin_base = "ph_{}_{:.10f}.bin".format(phtbase[:-4], pkwargs["angle"])
+        bin_base = "ph_{}_{:.15f}.bin".format(phtbase[:-4], pkwargs["angle"])
         if verbose:
-            print("...Compiling angle {:.3f}".format(npkw["angle"]))
+            print("...Running angle {:.3f}".format(npkw["angle"]))
 
     bin_path = os.path.join(dir_out, bin_base)
     #This output directory is some kind of default in meep
     outdir = bin_path[:-4]+"-out"
-    make_binary(phantom_template=phantom_template,
-                bin_path=bin_path,
-                verbose=verbose,
-                **pkwargs)
 
     prevdir = os.path.abspath(os.curdir)
     os.chdir(dir_out)
     if not simulation_completed(bin_path, 
                                 remove_unfinished=remove_unfinished):
+        # Create the binary for the simulation
+        make_binary(phantom_template=phantom_template,
+                    bin_path=bin_path,
+                    verbose=verbose,
+                    **pkwargs)
+        
         base_bin_path = os.path.basename(bin_base)
         logfile = base_bin_path[:-4]+"_exec.log"
         if verbose:
@@ -212,12 +214,17 @@ def run_projection(phantom_template, dir_out,
         runstring = "mpirun -n {} {} 2>&1 | tee {} ".format(
                     num_cpus, base_bin_path, logfile)
         os.system(runstring)
-        # copy log file
+        # move log file
         os.rename(os.path.join(dir_out, logfile),
                   os.path.join(outdir, logfile))
-        # copy cpp file
+        # move cpp file
         os.rename(bin_path[:-4]+".cpp",
                   os.path.join(outdir, os.path.basename(bin_path[:-4]+".cpp")))
+        # move compile log
+        complog = bin_path[:-4]+"_compile.log"
+        if os.path.exists(complog):
+            os.rename(complog,
+                      os.path.join(outdir, os.path.basename(complog)))
         # remove binary
         os.remove(bin_path)
     else:
@@ -344,10 +351,10 @@ def simulation_completed(path, remove_unfinished=False, verbose=0):
                  ((f.startswith("ph") or f.startswith("bg")) and 
                    f.endswith(".cpp")) or
                  #execution log file
-                 ( f.endswith == "_exec.log" )
+                 ( f.endswith("_exec.log") )
                 ):
                 ok_counter += 1
-        if ok_counter < 4:
+        if ok_counter >= 4:
             return True
         elif remove_unfinished:
             print("...Removing unfinished simulation: {}".format(out_path))

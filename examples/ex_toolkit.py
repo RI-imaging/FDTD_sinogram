@@ -7,14 +7,14 @@ import numpy as np
 import os
 import sys
 
-sys.path.insert(0, os.path.relpath(".", "../meep_tomo"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))+"/../meep_tomo")
 
 from meep_tomo import extract, common
 import ex_bpg
 
 
 def compute_metrices(tomo_path, approx):
-    """Compute RMS and TV metrices for meep-simulated ODT reconstruction
+    """Compute RMS and TV metrices for a meep-simulated ODT reconstruction
     
     Given a the directory of a simulation, e.g.
     phantom_3d_A0200_R13_T15000_Nmed1.333_Ncyt1.335_Nnuc1.335_Nleo1.335
@@ -44,14 +44,18 @@ def compute_metrices(tomo_path, approx):
         sim_dir = os.path.abspath(tomo_path)
         res_dir = os.path.abspath(tomo_path)+"_results"
         common.mkdir_p(res_dir)
+        metr_file = os.path.join(res_dir, "metrices.txt")
+        npy_file=False
     elif tomo_path.endswith(".npy"):
         res_dir = os.path.dirname(os.path.abspath(tomo_path))
-        assert res_dir.endswith("_results"), ".npy file must be from simulation result"
         sim_dir = res_dir[:-8]
+        msg = "Simulation directory not found! The .npy file should be in a "+\
+              "folder named after the simulation with '_results' appended!"  
+        assert os.path.exists(sim_dir), msg
+        metr_file = tomo_path[:-4]+"_metrices.txt"
+        npy_file=tomo_path
     else:
         raise ValueError("simulation must be a directory or an .npy file!")
-
-    metr_file = os.path.join(res_dir, "metrices.txt")
     
     tv = None
     ss = None
@@ -74,8 +78,12 @@ def compute_metrices(tomo_path, approx):
                         pass
     
     if tv is None or ss is None:
-        # Recompute everything
-        ri = ex_bpg.backpropagate_fdtd_data(sim_dir, approximation=approx)
+        if npy_file:
+            ri = np.load(npy_file)
+        else:
+            # Recompute everything
+            ri = ex_bpg.backpropagate_fdtd_data(sim_dir, approximation=approx)
+
         # reference
         riref = extract.get_tomo_ri_structure(sim_dir)
 
@@ -85,8 +93,8 @@ def compute_metrices(tomo_path, approx):
         ## Save result in resf files
         with open(metr_file, "a") as resfdata:
             lines = "# metrices of ri-riref\n"
-            lines += "TV_{} {:.10e}\n".format(approx, tv)
-            lines += "SS_{} {:.10e}\n".format(approx, ss)
+            lines += "TV_{} {:.15e}\n".format(approx, tv)
+            lines += "SS_{} {:.15e}\n".format(approx, ss)
             resfdata.writelines(lines)
             
     return ss, tv

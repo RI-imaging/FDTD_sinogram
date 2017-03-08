@@ -14,8 +14,7 @@ import nrefocus
 import odtbrain as odt
 import radontea as rt
 
-
-sys.path.insert(0, os.path.relpath(".", "../meep_tomo"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))+"/../meep_tomo")
 
 from meep_tomo import extract, common, postproc
 
@@ -52,16 +51,14 @@ def backpropagate_fdtd_data(tomo_path,
         res = info["wavelength [px]"]
         nm = info["medium_ri"]
 
-        uSin = get_sinogram(tomo_path, ld_offset, autofocus=autofocus, force=force)
+        sino, angles = get_sinogram(tomo_path, ld_offset, autofocus=autofocus, force=force)
         
         if autofocus:
             ld = 0
         else:
             ld = ld_offset
 
-        angles = extract.get_tomo_angles(tomo_path)
-
-        ri = backpropagate_sinogram(sinogram=uSin,
+        ri = backpropagate_sinogram(sinogram=sino,
                                     angles=angles,
                                     approx=approx,
                                     res=res,
@@ -128,7 +125,7 @@ def get_results_dir(tomo_path):
 
 
 def get_sinogram(tomo_path,
-                 ld_offset,
+                 ld_offset=1,
                  interpolate=False,
                  autofocus=True,
                  force=False):
@@ -215,7 +212,10 @@ def get_sinogram(tomo_path,
         # save sinogram
         np.save(name, u)
     
-    return u
+    
+    angles = extract.get_tomo_angles(tomo_path)
+    
+    return u, angles
 
 
 def save_cross_sections(directory, ri, wavelength=None, cut=(2,2,2),
