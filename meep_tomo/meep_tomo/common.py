@@ -3,6 +3,7 @@
 from __future__ import division, print_function, unicode_literals
 
 import os
+import re
 
 def mkdir_p(adir):
     """Recursively create a directory"""
@@ -12,3 +13,13 @@ def mkdir_p(adir):
             os.mkdir(adir)
         except:
             mkdir_p(os.path.dirname(adir))
+
+
+def alphanum2num(string):
+    """Removes all non-numeric characters from a string and returns a float"""
+    try:
+        ret = float(re.sub("[^0-9]", "", string))
+    except:
+        print(string)
+        ret = ""
+    return ret

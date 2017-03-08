@@ -22,7 +22,7 @@
 // and x-axis in radians.
 
 // rotation in x-z
-#define ANGLE .02
+#define ANGLE 0.0
 
 // the tilting angle w.r.t. the imaging plane
 #define TILT_PHI 0.2

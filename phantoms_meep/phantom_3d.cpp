@@ -22,7 +22,7 @@
 // and x-axis in radians.
 
 // rotation in x-z
-#define ANGLE .02
+#define ANGLE 0.0
 
 // These SIZEs include the PML and are total domain sizes (not half)
 // LATERALSIZE can be large to grab all scattered fields

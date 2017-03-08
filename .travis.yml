@@ -26,8 +26,7 @@ install:
 - pip install coveralls
 - pip freeze
 script:
-- cd python_wrapper
-- pip install -r requirements.txt
+- pip install -r meep_tomo/requirements.txt
 - coverage run --source=meep_tomo -m pytest
 - coverage report -m
 after_success:

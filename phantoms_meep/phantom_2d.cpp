@@ -21,7 +21,7 @@
 // axis (B). The angle of rotation PHI is angle between major axis (A)
 // and x-axis in radians.
 
-#define ANGLE .02
+#define ANGLE 0.0
 
 // These SIZEs include the PML and are total domain sizes (not half)
 // LATERALSIZE can be large to grab all scattered fields
