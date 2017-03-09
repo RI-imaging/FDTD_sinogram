@@ -122,6 +122,7 @@ def backpropagate_sinogram(sinogram,
 def get_results_dir(tomo_path):
     res_dir = os.path.abspath(tomo_path)+"_results"
     common.mkdir_p(res_dir)
+    return res_dir
 
 
 def get_sinogram(tomo_path,
@@ -153,10 +154,10 @@ def get_sinogram(tomo_path,
     res = info["wavelength"]
     nmed = info["medium_ri"]
 
-    ld_guess = (ld_offset + info["axial_object_size"]/2)*res
+    ld_guess = (ld_offset + info["axial_object_size [wavelengths]"]/2)*res
 
     # raw sinogram
-    rawname="sinogram_raw_{}.npy".format(ld_guess)
+    rawname = "sinogram_raw_{}.npy".format(ld_guess)
     rawname = os.path.join(res_dir, rawname)
     if os.path.exists(rawname) and not force:
         print("...Loading extracted sinogram")

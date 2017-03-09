@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
 
+import codecs
 import multiprocessing as mp
 import numpy as np
 import os
@@ -100,7 +101,7 @@ def compile_cpp(cpp_path, verbose=False):
 def get_phantom_kwargs(phantom_cpp):
     """Returns a dict for all "#define" statements of a cpp file"""
     # read in the original cpp script
-    with open(phantom_cpp, "r") as fd:
+    with codecs.open(phantom_cpp, "r", encoding="utf-8") as fd:
         script = fd.readlines()
     
     kwargs={}

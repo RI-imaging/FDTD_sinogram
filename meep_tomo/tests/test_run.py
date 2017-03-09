@@ -81,7 +81,7 @@ def test_run_tomography_scale():
                            timesteps=3,
                            wavelength=3.0,
                            verbose=1)
-    cpfile = "ph_phantom_2d_0.0000000000-out/ph_phantom_2d_0.0000000000.cpp"
+    cpfile = "ph_phantom_2d_0.000000000000000-out/ph_phantom_2d_0.000000000000000.cpp"
     cppath = os.path.join(wdir, cpfile)
     with open(cppath, "r") as fd:
         script = fd.read()

@@ -212,13 +212,13 @@ def get_ri_structure(path, crop_pml=True, outd=None, outf=None, savepng=False):
     rshape = np.shape(riref)
     if len(rshape) == 2:   #2D
         (xs, ys) = rshape
-        dpadl = np.ceil((xs-ys)/2)
-        dpadr = np.floor((xs-ys)/2)
+        dpadl = np.int(np.ceil((xs-ys)/2))
+        dpadr = np.int(xs-ys-dpadl)
         riref = np.pad(riref,((0,0),(dpadl,dpadr)), mode="edge").transpose()
     else:   #3D
         (xs, ys, zs) = np.shape(riref)
-        dpadl = np.ceil((xs-zs)/2)
-        dpadr = np.floor((xs-zs)/2)
+        dpadl = np.int(np.ceil((xs-zs)/2))
+        dpadr = np.int(xs-zs-dpadl)
         riref = np.pad(riref,((0,0),(0,0),(dpadl,dpadr)), mode="edge").transpose()
 
     if dpadl != dpadr:
