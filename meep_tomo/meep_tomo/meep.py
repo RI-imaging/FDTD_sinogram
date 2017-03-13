@@ -326,6 +326,11 @@ def simulation_completed(path, remove_unfinished=False, verbose=0):
         meep will name subsequent folders "-out1", etc. which would
         break our analysis pipeline.
 
+    Returns
+    -------
+    completed: bool
+        `True` if simulation was successfully completed.
+
     Notes
     -----
     Each simulation is run in a separate folder. Meep creates the "-out"

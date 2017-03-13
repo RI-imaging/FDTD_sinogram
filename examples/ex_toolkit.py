@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Tool kit for the examples"""
+"""Tool kit methods for the examples"""
 from __future__ import division, print_function, unicode_literals
 
 import numpy as np
@@ -13,28 +13,35 @@ from meep_tomo import extract, common
 import ex_bpg
 
 
-def compute_metrices(tomo_path, approx):
-    """Compute RMS and TV metrices for a meep-simulated ODT reconstruction
-    
-    Given a the directory of a simulation, e.g.
-    phantom_3d_A0200_R13_T15000_Nmed1.333_Ncyt1.335_Nnuc1.335_Nleo1.335
-    and an approximation type that is accepted by 
-    `backpropagate.backpropagate_fdtd_data`, returns the metrices
-    [sum_of_squares, total_variation]
-    
-    A second call with the same arguments will be very fast, because
-    the results are saved in the results folder.
-    
-    If simulation is not a directory, but points to a .npy file, then
-    it is assumed that this file points to the refractive index 
-    reconstruction of a simulation.
+def compute_metrices(tomo_path, approx, autofocus=False):
+    """Compute RMS and TV metrices for a MEEP-simulated ODT reconstruction
     
     Parameters
     ----------
-    tomo_dir : str
+    tomo_path: str
         Simulation directory or .npy file of a reconstructed simulation
-    approx : str
+    approx: str
         Approximation to use, one of ["radon", "born", "rytov"]
+    autofocus: bool
+        If `True`, perform autofocusing. If `False` uses the exact
+        focusing (the center of rotation in the simulation).
+        This only makes sense if `tomo_path` is not an .npy file.
+
+    Returns
+    -------
+    rms, tv: floats
+        root-mean-square and total variation errors
+
+    Notes
+    -----
+    A second call with the same arguments will be fast, because the
+    result is saved on disk.
+    
+    
+
+    See Also
+    --------
+    metric_rms, metric_tv: The used metrics
     """
     assert approx in ["radon", "born", "rytov"]
     
@@ -80,9 +87,12 @@ def compute_metrices(tomo_path, approx):
     if tv is None or ss is None:
         if npy_file:
             ri = np.load(npy_file)
+            assert autofocus==False, "`autofocus` has no effect for .npy files!"
         else:
             # Recompute everything
-            ri = ex_bpg.backpropagate_fdtd_data(sim_dir, approximation=approx)
+            ri = ex_bpg.backpropagate_fdtd_data(sim_dir,
+                                                approximation=approx,
+                                                autofocus=autofocus)
 
         # reference
         riref = extract.get_tomo_ri_structure(sim_dir)
@@ -101,8 +111,7 @@ def compute_metrices(tomo_path, approx):
 
 
 def cutout(a):
-    """ cut out circle/sphere from 2D/3D square/cubic array
-    """
+    """Cut out circle/sphere from 2D/3D square/cubic array"""
     x = np.arange(a.shape[0])
     c = a.shape[0] / 2
     
@@ -123,11 +132,11 @@ def cutout(a):
 
 
 def metric_rms(ri, ref):
-    """Root mean square metric
+    """Root mean square metric (normalized)
     
-    This metric was used in
-    Müller et. al,"ODTbrain: a Python library for full-view,
-    dense diffraction tomography" 2015
+    This metric was used and described in
+    Müller et. al, "ODTbrain: a Python library for full-view,
+    dense diffraction tomography" Bioinformatics 2015
     """
     rms = np.sum(cutout(ri.real-ref.real)**2)
     norm = np.sum(cutout(ref.real-1)**2)
@@ -135,11 +144,11 @@ def metric_rms(ri, ref):
 
 
 def metric_tv(ri, ref):
-    """Total variation metric
+    """Total variation metric (normalized)
     
-    This metric was used in
-    Müller et. al,"ODTbrain: a Python library for full-view,
-    dense diffraction tomography" 2015
+    This metric was used and described in
+    Müller et. al, "ODTbrain: a Python library for full-view,
+    dense diffraction tomography" Bioinformatics 2015
     """
     grad = np.gradient(ri.real-ref)
     result = 0

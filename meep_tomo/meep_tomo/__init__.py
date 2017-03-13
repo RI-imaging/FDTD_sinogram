@@ -5,7 +5,6 @@ from __future__ import division, print_function, unicode_literals
 import warnings
 
 from .meep import run_projection, run_tomography
-from .plot_phantom import plot_phantom
 from . import meep
 
 try:

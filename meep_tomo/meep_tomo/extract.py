@@ -43,7 +43,7 @@ def crop_arr(arr, crop):
     return b
 
 
-def get_field_at_ld(sim_path, ld=0, crop_pml=True):
+def get_field_at_ld(sim_path, ld, crop_pml=True):
     """ Obtain cross-section of field from h5 file
 
     Get the EM field at a distance ld [px] from the center of the
@@ -60,6 +60,9 @@ def get_field_at_ld(sim_path, ld=0, crop_pml=True):
         The axial position from the center of the image in pixels.
         For even images, the center is the right hand pixel
         of the actual center.
+    crop_pml: bool
+        Automatically crop the perfectly matching layer using the
+        "pmlsize" parameter of the simulation.
     """
     # check h5file
     if os.path.isdir(sim_path):
@@ -71,10 +74,9 @@ def get_field_at_ld(sim_path, ld=0, crop_pml=True):
     else:
         h5file=sim_path
     # check ld
-    if not isinstance(ld, int):
-        if ld != int(ld):
-            warnings.warn("Setting lD from {} to {}.".format(ld, int(ld)))
-        ld = int(ld)
+    if ld != int(ld):
+        warnings.warn("Setting lD from {} to {}.".format(ld, int(ld)))
+    ld = int(ld)
 
     # Open the file
     with h5py.File(h5file,'r') as fdem:
@@ -176,7 +178,7 @@ def get_field_h5files(sdir, prefix_dirs="ph"):
     return ffil
 
 
-def get_ri_structure(path, crop_pml=True, outd=None, outf=None, savepng=False):
+def get_ri_structure(path, crop_pml=True):
     """Obtain the 3D refractive index from an .h5 file
     
     Parameters
@@ -224,10 +226,7 @@ def get_ri_structure(path, crop_pml=True, outd=None, outf=None, savepng=False):
     if dpadl != dpadr:
         warnings.warn("Uneven cell size! Reference is shifted by "+
                       "half a pixel. -> Comparison might be faulty.")
-
-    # return RI
     return riref
-
 
 
 def get_sim_info(sim_path):
@@ -277,6 +276,30 @@ def get_sim_info(sim_path):
     return info
 
 
+def get_tomo_angles(tomo_path):
+    """Returns the angles that correspond to the sinogram
+    
+    The angle is obtained from the folder names of the simulation.
+
+    Parameters
+    ----------
+    tomo_path: str
+        Path to tomographic soimulation directory
+
+    Returns
+    -------
+    angles: 1d ndarray
+        The angles
+    """
+    _bg, phs = get_tomo_dirlist(tomo_path)
+    angles = []
+    for f in phs:
+        f = os.path.basename(f)
+        angles.append(float(f.split("_")[-1].strip("out-")))
+    angles = np.array(angles)
+    return angles
+
+
 def get_tomo_dirlist(tomo_path):
     """Returns all relevant simulation directories of a tomographic simulation
     
@@ -313,6 +336,13 @@ def get_tomo_ri_structure(tomo_path, crop_pml=True):
     ----------
     tomo_path: str
         Path to a tomographic simulation series
+    crop_pml: bool
+        Crops the perfectly matching layer from the simulation
+    
+    Returns
+    -------
+    ri: complex ndarray
+        The refractive index structure
     """
     _bg, phs = get_tomo_dirlist(tomo_path)
     npyfile = os.path.abspath(tomo_path)+"_results/ri_structure.npy"
@@ -337,20 +367,14 @@ def get_tomo_sinogram_at_ld(tomo_path, ld):
         For even images, the center is the right hand pixel
         of the actual center (see `get_field_at_ld`).
 
+    Returns
+    -------
+    sino: complex ndarray
+        The 2D/3D background-corrected complex field sinogam
     """
     bg, phs = get_tomo_dirlist(tomo_path)
-    bgfield = get_field_at_ld(bg)
+    bgfield = get_field_at_ld(bg, ld=ld)
     fields = []
     for ph in phs:
-        fields.append(get_field_at_ld(ph)/bgfield)
+        fields.append(get_field_at_ld(ph, ld=ld)/bgfield)
     return np.array(fields)
-
-
-def get_tomo_angles(tomo_path):
-    _bg, phs = get_tomo_dirlist(tomo_path)
-    angles = []
-    for f in phs:
-        f = os.path.basename(f)
-        angles.append(float(f.split("_")[-1].strip("out-")))
-    angles = np.array(angles)
-    return angles
