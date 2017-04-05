@@ -1,4 +1,4 @@
-## Finite-Difference Time-Domain (FDTD) simulations with cell phantoms
+## *In silico* tomography with Finite-Difference Time-Domain (FDTD) simulations
 This is a collection of [Meep](http://ab-initio.mit.edu/wiki/index.php/Main_Page) scripts and Python wrappers to generate tomographic scattering data of artificial cell phantoms, to reconstruct the refractive index (RI) from these scattering data, and to analyze the quality of the reconstructed RI in dependence of cell phantom properties and used reconstruction algorithm.
 
 - **examples**: Example usages of the Python wrapper

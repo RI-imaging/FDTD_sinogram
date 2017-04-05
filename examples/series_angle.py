@@ -9,10 +9,10 @@ radontea (backpojection), and nrefocus (numerical focusing).
 
 Notes
 -----
-This script will create a folder "simulations/series_angle" containing the
-MEEP simulation data and a folder "simulations/series_angle_results" that
-contains the postprocessing data including sinograms and reconstructions in
-.npy file format.
+This script will create a folder "simulations/series_angle" (~750MB) containing
+the MEEP simulation data and a folder "simulations/series_angle_results"
+(~150MB) that contains the postprocessing data including sinograms and
+3D refractive index reconstructions in the .npy file format.
 
 To be able to test the three reconstruction methods (Born, Radon, Rytov)
 for the experimental case, the sinogram data are autofocused. However,
@@ -25,6 +25,7 @@ gradient of the nucleolus is recovered much better than for autofocusing
 The overall message stays the same: The root-mean-square (RMS) and
 total variation (TV) errors are lowest for the Rytov approximation
 (series_angle_a_exact_focus.png vs. series_angle_a_autofocusing.png). 
+
 
 
 [1] Paul Müller, Mirjam Schürmann and Jochen Guck, "ODTbrain: a Python library
