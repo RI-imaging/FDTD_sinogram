@@ -9,12 +9,11 @@ addons:
     - libgsl-dev
     - libmeep-mpi-default-dev
     - libmeep-mpi-default8
-    - meep-mpi-default
-    - meep
-    - hdf5-tools
-    - h5utils
     - libhdf5-openmpi-dev
     - libhdf5-serial-dev
+    - libfftw3-dev
+    - hdf5-tools
+    - h5utils
 language: python
 python:
 - '3.6'
