@@ -8,6 +8,7 @@ apt:
   - libgsl-dev
   - libmeep-mpi-default-dev
   - libmeep-mpi-default
+  - meep-mpi-default
   - hdf5-tools
   - h5utils
   - libhdf5-openmpi-dev
