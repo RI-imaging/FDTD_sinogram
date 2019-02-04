@@ -44,9 +44,9 @@ import meep_tomo as mt
 
 
 def divisor_gen(n):
-    for i in xrange(1, int(n/2)+1):
-        if n % i == 0:
-            yield n//i
+    for ii in range(1, int(n/2)+1):
+        if n % ii == 0:
+            yield n // ii
 
 
 if __name__ == "__main__":

@@ -199,7 +199,7 @@ def get_ri_structure(path, crop_pml=True):
 
     with h5py.File(path, 'r') as h5fd:
         # eps = n^2
-        riref = np.sqrt(np.array(h5fd.items()[0][1]))
+        riref = np.sqrt(np.array(list(h5fd.items())[0][1]))
 
     if crop_pml:
         info = get_sim_info(os.path.dirname(path))
