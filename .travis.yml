@@ -1,32 +1,30 @@
 language: python
+dist: xenial
+apt:
+  packages:
+  - libatlas-base-dev
+  - libharminv-dev
+  - libgsl-dev
+  - libmeep-mpi-default-dev
+  - libmeep-mpi-default
+  - hdf5-tools
+  - h5utils
+  - libhdf5-openmpi-dev
+  - libhdf5-serial-dev
 python:
-- '2.7'
-- '3.5'
+- '3.6'
 notifications:
   email: false
     
 before_install:
 - sudo apt-get update -qq
 install:
-# Install meep
-- sudo bash ./install_meep/install_meep_debian.sh
-# Using the major Python version in the conda installer fixes this error:
-#UnsatisfiableError: The following specifications were found to be in conflict:
-#  - enum34 -> python 2.6*|2.7*|3.3*
-#  - python 3.4*
-- wget https://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
-- chmod +x miniconda.sh
-- INSTALL_DIR=${HOME}
-- ./miniconda.sh -b -p ${INSTALL_DIR}/miniconda
-- export PATH=${INSTALL_DIR}/miniconda/bin:$PATH
-- conda update --yes conda
-- conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy matplotlib h5py
+- pip install -r meep_tomo/requirements.txt
 - pip install pytest
 - pip install coverage
 - pip install coveralls
 - pip freeze
 script:
-- pip install -r meep_tomo/requirements.txt
 - coverage run --source=meep_tomo -m pytest
 - coverage report -m
 after_success:
