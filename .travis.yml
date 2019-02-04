@@ -14,6 +14,7 @@ addons:
     - libfftw3-dev
     - hdf5-tools
     - h5utils
+    - mpi-default-bin
 language: python
 python:
 - '3.6'
