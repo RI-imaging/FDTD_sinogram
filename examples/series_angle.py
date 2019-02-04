@@ -30,8 +30,6 @@ total variation (TV) errors are lowest for the Rytov approximation
 for full-view, dense diffraction tomography", Bioinformatics 2015,
 DOI: 10.1186/s12859-015-0764-0
 """
-from __future__ import division, print_function, unicode_literals
-
 from matplotlib import pylab as plt
 import numpy as np
 from os.path import abspath, dirname, exists, join
