@@ -1,19 +1,20 @@
 notifications:
   email: false
 dist: xenial
-apt:
-  packages:
-  - libatlas-base-dev
-  - libharminv-dev
-  - libgsl-dev
-  - libmeep-mpi-default-dev
-  - libmeep-mpi-default
-  - meep-mpi-default
-  - meep
-  - hdf5-tools
-  - h5utils
-  - libhdf5-openmpi-dev
-  - libhdf5-serial-dev
+addons:
+  apt:
+    packages:
+    - libatlas-base-dev
+    - libharminv-dev
+    - libgsl-dev
+    - libmeep-mpi-default-dev
+    - libmeep-mpi-default
+    - meep-mpi-default
+    - meep
+    - hdf5-tools
+    - h5utils
+    - libhdf5-openmpi-dev
+    - libhdf5-serial-dev
 language: python
 python:
 - '3.6'
