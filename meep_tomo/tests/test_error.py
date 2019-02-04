@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import division, print_function
-
 import numpy as np
 import os
 from os.path import abspath, basename, dirname, join, split, exists
@@ -22,7 +18,7 @@ def test_wrongkey(ph="phantom_2d"):
     wdir = tempfile.mkdtemp(prefix="meep_test")
     ph_file = join(phantom_dir, ph+".cpp")
     bin_path = join(wdir, ph)
-    
+
     try:
         mt.meep.make_binary(phantom_template=ph_file,
                             bin_path=bin_path,
@@ -38,4 +34,3 @@ if __name__ == "__main__":
     for key in list(loc.keys()):
         if key.startswith("test_") and hasattr(loc[key], "__call__"):
             loc[key]()
-    

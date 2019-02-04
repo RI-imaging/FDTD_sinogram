@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-""" Test if we can compile the phantoms
-"""
-from __future__ import division, print_function
-
+"""Test if we can compile the phantoms"""
 import numpy as np
 import os
 from os.path import abspath, basename, dirname, join, split, exists
@@ -26,7 +21,7 @@ def test_compile(ph="phantom_2d"):
     bin_path = join(wdir, ph+".bin")
     cpp_path = join(wdir, ph+".cpp")
     log_path = join(wdir, ph+"_compile.log")
-    
+
     mt.meep.make_binary(phantom_template=ph_file,
                         bin_path=bin_path,
                         verbose=1)
@@ -36,13 +31,13 @@ def test_compile(ph="phantom_2d"):
     assert exists(cpp_path)
     # The binary
     assert exists(bin_path)
-    
+
     shutil.rmtree(wdir, ignore_errors=True)
 
 
 def test_compile_all():
     """Test all phantom files"""
-    phs = [p for p in os.listdir(phantom_dir) if p.endswith(".cpp") ]
+    phs = [p for p in os.listdir(phantom_dir) if p.endswith(".cpp")]
     for p in phs:
         print("test compiling: ", p)
         test_compile(p[:-4])
@@ -54,4 +49,3 @@ if __name__ == "__main__":
     for key in list(loc.keys()):
         if key.startswith("test_") and hasattr(loc[key], "__call__"):
             loc[key]()
-    

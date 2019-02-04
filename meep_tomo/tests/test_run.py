@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-""" Test if MEEP runs through
-"""
-from __future__ import division, print_function
-
+"""Test if MEEP runs through"""
 import numpy as np
 import os
 from os.path import abspath, basename, dirname, join, split, exists
@@ -22,9 +17,9 @@ phantom_dir = join(dirname(parent_dir), "phantoms_meep")
 
 
 def stest_run():
-    ph="phantom_2d"
-    timesteps=10
-    wavelength=3.0
+    ph = "phantom_2d"
+    timesteps = 10
+    wavelength = 3.0
     wdir = tempfile.mkdtemp(prefix="meep_test_")
     ph_file = join(phantom_dir, ph+".cpp")
 
@@ -38,8 +33,8 @@ def stest_run():
     assert exists(join(bgdir, "ez-000001.67.h5"))
     assert exists(join(bgdir, "bg_"+ph+"_exec.log"))
     assert mt.meep.simulation_completed(bgdir)
-    
-    angle=0.1
+
+    angle = 0.1
     phdir = mt.meep.run_projection(phantom_template=ph_file,
                                    angle=angle,
                                    dir_out=wdir,
@@ -65,7 +60,7 @@ def stest_run_tomography():
                            timesteps=3,
                            wavelength=3.0,
                            verbose=1)
-    
+
     shutil.rmtree(wdir)
 
 
@@ -97,4 +92,3 @@ if __name__ == "__main__":
     for key in list(loc.keys()):
         if key.startswith("test_") and hasattr(loc[key], "__call__"):
             loc[key]()
-    

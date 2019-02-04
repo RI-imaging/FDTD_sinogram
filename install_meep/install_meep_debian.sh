@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script installs MEEP (http://ab-initio.mit.edu/wiki/index.php/Meep)
-# on a Debian-based Linux system (using apt).
+# from sources on a Debian-based Linux system (using apt).
 #
 # Run this script with `sudo bash /path/to/this/script.sh`
 
@@ -60,4 +60,3 @@ cd ..
 echo "...Updating library cache"
 # Update library cache if you get the error "cannot open shared object file: No such file or directory":
 sudo ldconfig
-

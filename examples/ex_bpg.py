@@ -1,8 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""backpropagation methods for the examples"""
-from __future__ import division, print_function, unicode_literals
-
+"""Backpropagation methods used in the examples"""
 import matplotlib.pylab as plt
 import numpy as np
 import os
@@ -25,7 +21,7 @@ def backpropagate_fdtd_data(tomo_path,
                             force=False,
                             verbose=0):
     """Reconstruct a tomographic simulation folder
-    
+
     Parameters
     ----------
     tomo_path: str
@@ -46,16 +42,16 @@ def backpropagate_fdtd_data(tomo_path,
         If set to `True`, no cached data are used.
     verbose: int
         Increment to increase verbosity
-    
+
     Returns
     -------
     ri: ndarray
         The 2D or 3D reconstructed refractive index
     """
     assert approx in ["radon", "born", "rytov"]
-    
+
     res_dir = get_results_dir(tomo_path)
-    
+
     # Determine name of resulting npy file
     name = "ri_{}_lmeas{}".format(approx, ld_offset)
     if autofocus:
@@ -64,7 +60,7 @@ def backpropagate_fdtd_data(tomo_path,
         name += "_intp{}".format(interpolate)
     name += "_{}.npy".format(os.path.basename(tomo_path))
     name = os.path.join(res_dir, name)
-    
+
     if os.path.exists(name) and not force:
         if verbose:
             print("...Using existing refractive index: {}".format(name))
@@ -76,7 +72,8 @@ def backpropagate_fdtd_data(tomo_path,
         res = info["wavelength"]
         nm = info["medium_ri"]
 
-        sino, angles = get_sinogram(tomo_path, ld_offset, autofocus=autofocus, force=force)
+        sino, angles = get_sinogram(
+            tomo_path, ld_offset, autofocus=autofocus, force=force)
 
         ri = backpropagate_sinogram(sinogram=sino,
                                     angles=angles,
@@ -86,9 +83,9 @@ def backpropagate_fdtd_data(tomo_path,
                                     ld=0)
         # save ri
         np.save(name, ri)
-        
+
     return ri
-    
+
 
 def backpropagate_sinogram(sinogram,
                            angles,
@@ -98,7 +95,7 @@ def backpropagate_sinogram(sinogram,
                            ld=0,
                            ):
     """Backpropagate a 2D or 3D sinogram
-    
+
     Parameters
     ----------
     sinogram: complex ndarray
@@ -115,14 +112,14 @@ def backpropagate_sinogram(sinogram,
         Reconstruction distance. Values !=0 only make sense for the
         Born approximation (which itself is not very usable).
         See the ODTbrain documentation for more information.
-    
+
     Returns
     -------
     ri: ndarray
         The 2D or 3D reconstructed refractive index
     """
     sshape = len(sinogram.shape)
-    assert sshape in [2,3], "sinogram must have dimension 2 or 3"
+    assert sshape in [2, 3], "sinogram must have dimension 2 or 3"
 
     uSin = sinogram
     assert approx in ["radon", "born", "rytov"]
@@ -131,7 +128,7 @@ def backpropagate_sinogram(sinogram,
         uSin = odt.sinogram_as_rytov(uSin)
     elif approx == "radon":
         uSin = odt.sinogram_as_radon(uSin)
-    
+
     if approx in ["born", "rytov"]:
         # Perform reconstruction with ODT
         if sshape == 2:
@@ -154,7 +151,7 @@ def backpropagate_sinogram(sinogram,
         # Perform reconstruction with OPT
         # works in 2d and 3d
         f = rt.backproject(uSin, angles=angles)
-        ri = odt.opt_to_ri(f, res, nm)                
+        ri = odt.opt_to_ri(f, res, nm)
 
     return ri
 
@@ -172,7 +169,7 @@ def get_sinogram(tomo_path,
                  interpolate=False,
                  force=False):
     """Obtain the sinogram of a MEEP tomographic simulation
-    
+
     Parameters
     ----------
     tomo_path: str
@@ -189,7 +186,7 @@ def get_sinogram(tomo_path,
         reconstruction.
     force: bool
         If set to `True`, no cached data are used.
-    
+
     Returns
     -------
     sino: complex ndarray
@@ -214,7 +211,7 @@ def get_sinogram(tomo_path,
         print("...Extracting sinogram")
         sino_raw = extract.get_tomo_sinogram_at_ld(tomo_path, ld=ld_guess)
         np.save(rawname, sino_raw)
-    
+
     # processed sinogram
     name = "sinogram_lmeas{}".format(ld_guess)
     if autofocus:
@@ -229,7 +226,7 @@ def get_sinogram(tomo_path,
         u = np.load(name)
     else:
         print("...Processing raw sinogram: {}".format(name))
-        
+
         if interpolate:
             assert len(sino_raw.shape) == 3, "interpolation only for 3D data!"
             u = []
@@ -239,18 +236,19 @@ def get_sinogram(tomo_path,
             u = np.array(u)
         else:
             u = sino_raw
-        
+
         if autofocus:
             print("......Performing autofocusing")
             u, dopt, gradient = nrefocus.autofocus_stack(u, nmed,
-                                                         res, ival=(-1.5*ld_guess, 0), 
-                                                         same_dist=True, 
+                                                         res, ival=(-1.5 *
+                                                                    ld_guess, 0),
+                                                         same_dist=True,
                                                          ret_ds=True, ret_grads=True,
                                                          metric="average gradient",
                                                          )
             print("Autofocusing distance:", np.average(dopt))
             # save gradient
-            plt.figure(figsize=(4,4), dpi=600)
+            plt.figure(figsize=(4, 4), dpi=600)
             plt.plot(gradient[0][0][0], gradient[0][0][1], color="black")
             plt.plot(gradient[0][1][0], gradient[0][1][1], color="red")
             plt.xlabel("distance from original slice")
@@ -267,7 +265,6 @@ def get_sinogram(tomo_path,
         # save sinogram
         np.save(name, u)
 
-    
     angles = extract.get_tomo_angles(tomo_path)
-    
+
     return u, angles

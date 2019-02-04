@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Error estimation for varying number of sinogram images (Born, Radon, Rytov)
 
 This example reproduces figure 1 and partially figure 3 of [1], showcasing
@@ -48,8 +46,8 @@ import meep_tomo as mt
 
 
 def divisor_gen(n):
-    for i in xrange(1,int(n/2)+1):
-        if n%i == 0: 
+    for i in xrange(1, int(n/2)+1):
+        if n % i == 0:
             yield n//i
 
 
@@ -80,15 +78,15 @@ if __name__ == "__main__":
     # Compute all possible divisors for the number of angles
     for dd in divisor_gen(int(num_angles)):
         # Get subsection of sinogram
-        subsin=1*sino[::num_angles//dd]
-        subang=1*angles[::num_angles//dd]
+        subsin = 1*sino[::num_angles//dd]
+        subang = 1*angles[::num_angles//dd]
         # Perform reconstructions
         for approx in ["rytov", "born", "radon"]:
             if autofocus:
-                ap="_af"
+                ap = "_af"
             else:
-                ap=""
-            npyfile = "divisor{}_{}{}.npy".format(dd, approx, ap) 
+                ap = ""
+            npyfile = "divisor{}_{}{}.npy".format(dd, approx, ap)
             npyfile = join(dir_res, npyfile)
             if not exists(npyfile):
                 print("...recostr divisor {} w/approx. {}".format(dd, approx))
@@ -109,20 +107,23 @@ if __name__ == "__main__":
 
     print("...Creating figure 1")
     colors = ['#3925f9', "#3c3c3c", "#d84242"]
-    kwargs_ri=dict(vmin=1.333, vmax=1.387, cmap=plt.cm.get_cmap("Spectral_r"))
-    fig1 = plt.figure("Figure 1 (Müller et. al, Bioinformatics 2015)", (10, 10))
-    grid = [plt.subplot2grid((3,3),(0,0), title="phantom"),
-            plt.subplot2grid((3,3),(1,0), title="backpropagation (Born)"),
-            plt.subplot2grid((3,3),(1,1), title="backprojection (Radon)"),
-            plt.subplot2grid((3,3),(1,2), title="backpropagation (Rytov)"),
-            plt.subplot2grid((3,3),(0,1), colspan=2, title="phase sinogram"),
-            plt.subplot2grid((3,3),(2,0), colspan=3,
+    kwargs_ri = dict(vmin=1.333, vmax=1.387,
+                     cmap=plt.cm.get_cmap("Spectral_r"))
+    fig1 = plt.figure(
+        "Figure 1 (Müller et. al, Bioinformatics 2015)", (10, 10))
+    grid = [plt.subplot2grid((3, 3), (0, 0), title="phantom"),
+            plt.subplot2grid((3, 3), (1, 0), title="backpropagation (Born)"),
+            plt.subplot2grid((3, 3), (1, 1), title="backprojection (Radon)"),
+            plt.subplot2grid((3, 3), (1, 2), title="backpropagation (Rytov)"),
+            plt.subplot2grid((3, 3), (0, 1), colspan=2,
+                             title="phase sinogram"),
+            plt.subplot2grid((3, 3), (2, 0), colspan=3,
                              title="cross-section through phantom nucleolus"),
-           ]
+            ]
     # phantom
     phantom = mt.extract.get_tomo_ri_structure(tomo_path=dir_out)
     grid[0].imshow(phantom, **kwargs_ri)
-    cutcoord=phantom.shape[0]//2+int(2*wavelength)
+    cutcoord = phantom.shape[0]//2+int(2*wavelength)
     for gd in grid[:4]:
         gd.set_xticks([])
         gd.set_yticks([])
@@ -155,10 +156,14 @@ if __name__ == "__main__":
     ax2 = plt.subplot(212)
     ax2.set_ylabel("normalized TV error\n of reconstruction")
     for ii, approx in enumerate(["born", "radon", "rytov"]):
-        rms = np.array([[it[1], it[2]] for it in rms_metrices if it[0]==approx])
-        ax1.plot(rms[:,0], rms[:,1], colors[ii], label=approx.capitalize()+" 2D")
-        tv = np.array([[it[1], it[2]] for it in tv_metrices if it[0]==approx])
-        ax2.plot(tv[:,0], tv[:,1], colors[ii], label=approx.capitalize()+" 2D")
+        rms = np.array([[it[1], it[2]]
+                        for it in rms_metrices if it[0] == approx])
+        ax1.plot(rms[:, 0], rms[:, 1], colors[ii],
+                 label=approx.capitalize()+" 2D")
+        tv = np.array([[it[1], it[2]]
+                       for it in tv_metrices if it[0] == approx])
+        ax2.plot(tv[:, 0], tv[:, 1], colors[ii],
+                 label=approx.capitalize()+" 2D")
     for ax in [ax1, ax2]:
         ax.legend()
         ax.set_xlabel("total number of projections for reconstruction")
