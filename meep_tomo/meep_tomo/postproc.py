@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import interpolate
-import unwrap
+from skimage.restoration import unwrap_phase
 import warnings
 
 
@@ -35,7 +35,7 @@ def interpolate_field(field, newsize, info=None, verbose=False):
             field.shape[0], newsize))
 
     ampl = np.abs(field)
-    phas = unwrap.unwrap(np.angle(field))
+    phas = unwrap_phase(np.angle(field))
     x = np.arange(size)
     ampl_i = interpolate.RectBivariateSpline(x, x, ampl, kx=1, ky=1)
     phas_i = interpolate.RectBivariateSpline(x, x, phas, kx=1, ky=1)

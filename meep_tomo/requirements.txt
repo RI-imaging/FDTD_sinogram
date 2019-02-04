@@ -1,6 +1,6 @@
+scikit-image
 h5py
 image
 matplotlib
 numpy
 scipy
-unwrap
