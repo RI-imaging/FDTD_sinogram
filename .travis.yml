@@ -8,7 +8,7 @@ addons:
     - libharminv-dev
     - libgsl-dev
     - libmeep-mpi-default-dev
-    - libmeep-mpi-default
+    - libmeep-mpi-default8
     - meep-mpi-default
     - meep
     - hdf5-tools
