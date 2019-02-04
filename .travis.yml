@@ -9,6 +9,7 @@ apt:
   - libmeep-mpi-default-dev
   - libmeep-mpi-default
   - meep-mpi-default
+  - meep
   - hdf5-tools
   - h5utils
   - libhdf5-openmpi-dev
