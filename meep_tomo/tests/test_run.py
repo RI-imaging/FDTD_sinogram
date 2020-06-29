@@ -5,7 +5,6 @@ from os.path import abspath, basename, dirname, join, split, exists
 import shutil
 import sys
 import tempfile
-from scipy.io.wavfile import WAVE_FORMAT_EXTENSIBLE
 
 # Add parent directory to beginning of path variable
 parent_dir = dirname(dirname(abspath(__file__)))
